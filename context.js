@@ -44,8 +44,15 @@ Namespace.prototype.createContext = function () {
 Namespace.prototype.run = function (fn) {
   var context = this.createContext();
   this.enter(context);
+  let isPromise = false
   try {
-    fn(context);
+    const fnExecuting = fn(context)
+    if (fnExecuting && fnExecuting.then) {
+      fnExecuting.then(() => {
+        this.exit(context);
+      });
+      isPromise = true
+    }
     return context;
   }
   catch (exception) {
@@ -55,7 +62,9 @@ Namespace.prototype.run = function (fn) {
     throw exception;
   }
   finally {
-    this.exit(context);
+    if (!isPromise) {
+      this.exit(context);
+    }
   }
 };
 
